@@ -1,0 +1,7 @@
+.root{
+    -fx-font-size: 48pt;
+    -fx-font-family: "Consolas";
+    -fx-base: rgb(130, 140, 40);
+    -fx-background-color: aquamarine;
+    -fx-alignment: center;
+}

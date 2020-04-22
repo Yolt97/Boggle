@@ -1,13 +1,15 @@
 import javafx.application.Application;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -32,7 +34,9 @@ public class gameBoard extends Application {
         gridPane.setHgap(5);
         gridPane.setVgap(5);
         gridPane.setGridLinesVisible(true);
+
         Scene scene = new Scene(borderPane, 700, 700);
+        scene.getStylesheets().add(getClass().getResource("stylesheet.css").toExternalForm());
 
         Font font = new Font("Consolas", 20);
         Font titleFont = new Font("Consolas", 32);
@@ -47,10 +51,22 @@ public class gameBoard extends Application {
         //Put letters on gridPane
         int counter = 0;
         ArrayList<String> letters = rollDice();
+
         for(int row = 0; row < sqrt(letters.size()); row++){
             for(int column = 0; column < sqrt(letters.size()); column++){
-                gridPane.add(new Text(letters.get(counter++)), row, column);
+                Label text = new Label("*");
+                text.setText(letters.get(counter++));
+                text.setAlignment(Pos.CENTER);
+                gridPane.add(text, row, column);
+                gridPane.setHalignment(text, HPos.CENTER);
+                gridPane.setValignment(text, VPos.CENTER);
             }
+        }
+
+        //Fix column width
+        for(int i = 0; i < sqrt(letters.size()); i++){
+            ColumnConstraints col = new ColumnConstraints(100);
+            gridPane.getColumnConstraints().add(col);
         }
 
         primaryStage.setTitle("Boggle 4x4");
