@@ -3,9 +3,13 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Ellipse;
+import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -17,6 +21,10 @@ import static java.lang.Math.sqrt;
 
 public class gameBoard extends Application {
 
+    private Cell[][] cell = new Cell[4][4];
+    private String[] gameLetters = new String[16];
+    private int letterCounter = 0;
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -26,13 +34,24 @@ public class gameBoard extends Application {
         //Create panes
         BorderPane borderPane = new BorderPane();
         GridPane gridPane = new GridPane();
-        borderPane.setCenter(gridPane);
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setAlignment(Pos.CENTER);
-        gridPane.setHgap(5);
-        gridPane.setVgap(5);
-        gridPane.setGridLinesVisible(true);
-        Scene scene = new Scene(borderPane, 700, 700);
+
+        rollDice();
+
+        GridPane pane1= new GridPane();
+        //set Cell objects to pane, and set token value of each cell
+        for(int i=0; i < 4; i++)
+            for(int j=0; j<4; j++){
+                cell[i][j]= new Cell(i, j);
+                Label label = new Label(gameLetters[letterCounter]);
+                label.setAlignment(Pos.CENTER_RIGHT);
+                cell[i][j].getChildren().add(label);
+                cell[i][j].setToken(gameLetters[letterCounter++]);
+                pane1.add(cell[i][j],j, i);
+                pane1.setAlignment(Pos.CENTER);
+
+            }
+
+        Scene scene = new Scene(borderPane, 200, 200);
 
         Font font = new Font("Consolas", 20);
         Font titleFont = new Font("Consolas", 32);
@@ -42,25 +61,18 @@ public class gameBoard extends Application {
         title.setFont(titleFont);
         title.setTextFill(Color.BLUE);
         borderPane.setTop(title);
+        borderPane.setCenter(pane1);
         borderPane.setAlignment(title, Pos.CENTER);
 
-        //Put letters on gridPane
-        int counter = 0;
-        ArrayList<String> letters = rollDice();
-        for(int row = 0; row < sqrt(letters.size()); row++){
-            for(int column = 0; column < sqrt(letters.size()); column++){
-                gridPane.add(new Text(letters.get(counter++)), row, column);
-            }
-        }
 
         primaryStage.setTitle("Boggle 4x4");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    public ArrayList<String> rollDice(){
+    public void rollDice(){
         ArrayList<Die> dice = new ArrayList<>(); //Dice
-        ArrayList<String> letters = new ArrayList<>(); //Letters chosen from dice
+        // ArrayList<String> letters = new ArrayList<>(); //Letters chosen from dice
 
         //Add unrolled dice
         dice.add(new Die(new String[]{"A", "A", "E", "E", "G", "N"}));
@@ -86,9 +98,47 @@ public class gameBoard extends Application {
         //Roll each die and select the letter
         for (int i=0; i<dice.size(); i++){
             dice.get(i).roll();
-            letters.add(dice.get(i).getFace());
+            gameLetters[i]=(dice.get(i).getFace());
+        }
+    }
+
+    //used the cell class from the Tic Tac Toe example
+    public class Cell extends Pane {
+        // Indicate the row and column of this cell in the board
+        private int row;
+        private int column;
+
+        private String token;
+
+        public Cell(int row, int column) {
+            this.row = row;
+            this.column = column;
+            this.setPrefSize(2000, 2000); // What happens without this?
+            setStyle("-fx-border-color: black");// Set cell's border
+
+            //this.setOnMouseClicked(e -> handleMouseClick());
         }
 
-        return letters;
+        /**Return token */
+        public String getToken() {
+            return token;
+        }
+
+        public void setToken(String token){
+            this.token = token;
+        }
+
+        /* Handle a mouse click event
+        private void handleMouseClick() {
+            // If cell is not occupied and the player has the turn
+            if (token == ' ' && myTurn) {
+                setToken(myToken);  // Set the player's token in the cell
+                myTurn = false;
+                rowSelected = row;
+                columnSelected = column;
+                lblStatus.setText("Waiting for the other player to move");
+                waiting = false; // Just completed a successful move
+            }
+        } */
     }
 }
