@@ -4,9 +4,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
@@ -24,6 +22,9 @@ public class gameBoard extends Application {
     private Cell[][] cell = new Cell[4][4];
     private String[] gameLetters = new String[16];
     private int letterCounter = 0;
+    private Boolean firstmove= true;
+    private int lastCellRow;
+    private int lastCellColumn;
 
     public static void main(String[] args) {
         launch(args);
@@ -109,6 +110,7 @@ public class gameBoard extends Application {
         private int column;
 
         private String token;
+        private Boolean notClicked = true;
 
         public Cell(int row, int column) {
             this.row = row;
@@ -116,7 +118,7 @@ public class gameBoard extends Application {
             this.setPrefSize(2000, 2000); // What happens without this?
             setStyle("-fx-border-color: black");// Set cell's border
 
-            //this.setOnMouseClicked(e -> handleMouseClick());
+            this.setOnMouseClicked(e -> handleMouseClick());
         }
 
         /**Return token */
@@ -128,17 +130,34 @@ public class gameBoard extends Application {
             this.token = token;
         }
 
-        /* Handle a mouse click event
+        /** Handle a mouse click event */
         private void handleMouseClick() {
-            // If cell is not occupied and the player has the turn
-            if (token == ' ' && myTurn) {
-                setToken(myToken);  // Set the player's token in the cell
-                myTurn = false;
-                rowSelected = row;
-                columnSelected = column;
-                lblStatus.setText("Waiting for the other player to move");
-                waiting = false; // Just completed a successful move
+            // change cell color when clicked
+            if(firstmove){
+                this.setBackground(new Background(new BackgroundFill(Color.LIGHTGREY,CornerRadii.EMPTY, Insets.EMPTY)));
+                firstmove=false;
+                lastCellRow= row;
+                lastCellColumn= column;
+                this.notClicked=false;
             }
-        } */
+            if(adjacentToLastCell(row, column) && notClicked){
+                this.setBackground(new Background(new BackgroundFill(Color.LIGHTGREY,CornerRadii.EMPTY, Insets.EMPTY)));
+                lastCellColumn=column;
+                lastCellRow=row;
+                this.notClicked=false;
+            }
+        }
+
+        private Boolean adjacentToLastCell(int cellRow, int cellColumn){
+            if((cellRow == (lastCellRow - 1) || cellRow == (lastCellRow + 1)) && cellColumn == lastCellColumn)
+                return true;
+            else if((cellColumn == (lastCellColumn - 1) || cellColumn == (lastCellColumn + 1)) && cellRow == lastCellRow)
+                return true;
+            else if((cellColumn == (lastCellColumn - 1) || cellColumn == (lastCellColumn + 1)) && (cellRow == (lastCellRow - 1) || cellRow == (lastCellRow + 1)))
+                return true;
+            return false;
+
+        }
     }
 }
+
