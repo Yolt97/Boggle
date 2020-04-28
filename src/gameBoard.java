@@ -1,15 +1,15 @@
 import javafx.application.Application;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Ellipse;
+import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -18,6 +18,13 @@ import java.util.Collections;
 import static java.lang.Math.sqrt;
 
 public class gameBoard extends Application {
+
+    private Cell[][] cell = new Cell[4][4];
+    private String[] gameLetters = new String[16];
+    private int letterCounter = 0;
+    private Boolean firstmove= true;
+    private int lastCellRow;
+    private int lastCellColumn;
 
     public static void main(String[] args) {
         launch(args);
@@ -28,15 +35,24 @@ public class gameBoard extends Application {
         //Create panes
         BorderPane borderPane = new BorderPane();
         GridPane gridPane = new GridPane();
-        borderPane.setCenter(gridPane);
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.setAlignment(Pos.CENTER);
-        gridPane.setHgap(5);
-        gridPane.setVgap(5);
-        gridPane.setGridLinesVisible(true);
 
-        Scene scene = new Scene(borderPane, 700, 700);
-        scene.getStylesheets().add(getClass().getResource("stylesheet.css").toExternalForm());
+        rollDice();
+
+        GridPane pane1= new GridPane();
+        //set Cell objects to pane, and set token value of each cell
+        for(int i=0; i < 4; i++)
+            for(int j=0; j<4; j++){
+                cell[i][j]= new Cell(i, j);
+                Label label = new Label(gameLetters[letterCounter]);
+                label.setAlignment(Pos.CENTER_RIGHT);
+                cell[i][j].getChildren().add(label);
+                cell[i][j].setToken(gameLetters[letterCounter++]);
+                pane1.add(cell[i][j],j, i);
+                pane1.setAlignment(Pos.CENTER);
+
+            }
+
+        Scene scene = new Scene(borderPane, 200, 200);
 
         Font font = new Font("Consolas", 20);
         Font titleFont = new Font("Consolas", 32);
@@ -46,37 +62,18 @@ public class gameBoard extends Application {
         title.setFont(titleFont);
         title.setTextFill(Color.BLUE);
         borderPane.setTop(title);
+        borderPane.setCenter(pane1);
         borderPane.setAlignment(title, Pos.CENTER);
 
-        //Put letters on gridPane
-        int counter = 0;
-        ArrayList<String> letters = rollDice();
-
-        for(int row = 0; row < sqrt(letters.size()); row++){
-            for(int column = 0; column < sqrt(letters.size()); column++){
-                Label text = new Label("*");
-                text.setText(letters.get(counter++));
-                text.setAlignment(Pos.CENTER);
-                gridPane.add(text, row, column);
-                gridPane.setHalignment(text, HPos.CENTER);
-                gridPane.setValignment(text, VPos.CENTER);
-            }
-        }
-
-        //Fix column width
-        for(int i = 0; i < sqrt(letters.size()); i++){
-            ColumnConstraints col = new ColumnConstraints(100);
-            gridPane.getColumnConstraints().add(col);
-        }
 
         primaryStage.setTitle("Boggle 4x4");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    public ArrayList<String> rollDice(){
+    public void rollDice(){
         ArrayList<Die> dice = new ArrayList<>(); //Dice
-        ArrayList<String> letters = new ArrayList<>(); //Letters chosen from dice
+        // ArrayList<String> letters = new ArrayList<>(); //Letters chosen from dice
 
         //Add unrolled dice
         dice.add(new Die(new String[]{"A", "A", "E", "E", "G", "N"}));
@@ -102,9 +99,65 @@ public class gameBoard extends Application {
         //Roll each die and select the letter
         for (int i=0; i<dice.size(); i++){
             dice.get(i).roll();
-            letters.add(dice.get(i).getFace());
+            gameLetters[i]=(dice.get(i).getFace());
+        }
+    }
+
+    //used the cell class from the Tic Tac Toe example
+    public class Cell extends Pane {
+        // Indicate the row and column of this cell in the board
+        private int row;
+        private int column;
+
+        private String token;
+        private Boolean notClicked = true;
+
+        public Cell(int row, int column) {
+            this.row = row;
+            this.column = column;
+            this.setPrefSize(2000, 2000); // What happens without this?
+            setStyle("-fx-border-color: black");// Set cell's border
+
+            this.setOnMouseClicked(e -> handleMouseClick());
         }
 
-        return letters;
+        /**Return token */
+        public String getToken() {
+            return token;
+        }
+
+        public void setToken(String token){
+            this.token = token;
+        }
+
+        /** Handle a mouse click event */
+        private void handleMouseClick() {
+            // change cell color when clicked
+            if(firstmove){
+                this.setBackground(new Background(new BackgroundFill(Color.LIGHTGREY,CornerRadii.EMPTY, Insets.EMPTY)));
+                firstmove=false;
+                lastCellRow= row;
+                lastCellColumn= column;
+                this.notClicked=false;
+            }
+            if(adjacentToLastCell(row, column) && notClicked){
+                this.setBackground(new Background(new BackgroundFill(Color.LIGHTGREY,CornerRadii.EMPTY, Insets.EMPTY)));
+                lastCellColumn=column;
+                lastCellRow=row;
+                this.notClicked=false;
+            }
+        }
+
+        private Boolean adjacentToLastCell(int cellRow, int cellColumn){
+            if((cellRow == (lastCellRow - 1) || cellRow == (lastCellRow + 1)) && cellColumn == lastCellColumn)
+                return true;
+            else if((cellColumn == (lastCellColumn - 1) || cellColumn == (lastCellColumn + 1)) && cellRow == lastCellRow)
+                return true;
+            else if((cellColumn == (lastCellColumn - 1) || cellColumn == (lastCellColumn + 1)) && (cellRow == (lastCellRow - 1) || cellRow == (lastCellRow + 1)))
+                return true;
+            return false;
+
+        }
     }
 }
+
