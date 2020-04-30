@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
 
-public class gameBoard extends Application {
+public class GameBoard2 extends Application {
 
     private Cell[][] cell = new Cell[4][4];
     private String[] gameLetters = new String[16];
