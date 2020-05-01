@@ -25,7 +25,6 @@ import java.util.Date;
 
 public class GameBoardServer extends Application {
 
-
     private int sessionNum = 1;
 
     public void start(Stage primaryStage) {
@@ -36,7 +35,6 @@ public class GameBoardServer extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-
         new Thread( () -> {
 
             try {
@@ -46,7 +44,7 @@ public class GameBoardServer extends Application {
                 while(true){
                     Platform.runLater(() -> serverLog.appendText(new Date() + ": Waiting for players to join\n"));
 
-                    Socket player1= serverSocket.accept();
+                    Socket player1 = serverSocket.accept();
 
                     Platform.runLater(() -> {
                         serverLog.appendText(new Date() + ": Player 1 joined session\n");
@@ -86,7 +84,6 @@ public class GameBoardServer extends Application {
         private DataOutputStream toPlayer1;
         private DataInputStream fromPlayer2;
         private DataOutputStream toPlayer2;
-
 
         public HandleSession(Socket player1, Socket player2) {
             this.player1= player1;

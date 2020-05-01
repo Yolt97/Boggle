@@ -1,18 +1,11 @@
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import javafx.animation.PauseTransition;
 import javafx.application.Application;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -22,34 +15,32 @@ import javafx.util.Duration;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class gameBoard extends Application {
+public class GameBoard extends Application {
 
-    private Cell[][] cell = new Cell[4][4];
-    private String[] gameLetters = new String[16];
-    private int letterCounter = 0;
-    private Boolean firstmove= true;
-    private int lastCellRow;
-    private int lastCellColumn;
+    private Boolean firstmove = true;
+    private int letterCounter, score = 0;
+    private int lastCellColumn, lastCellRow;
     private StringBuilder word = new StringBuilder("");
     private ArrayList<String> foundWords = new ArrayList<>();
+    private Cell[][] cell = new Cell[4][4];
+    private String[] gameLetters = new String[16];
 
     //Variables for timer
-    private static final Integer STARTTIME = 3;
-    private Timeline timeline = new Timeline();
+    int interval, remaining, minutes, seconds;
+    int initialSeconds = 120;
+    int delay = 1000;
+    int period = 1000;
     private Label displayTime = new Label();
-    private int minuteDisplay;
-    private int secondDisplay;
-    private IntegerProperty timerSeconds = new SimpleIntegerProperty(STARTTIME);
+    private Timer timer;
 
     private DataInputStream fromServer;
     private OutputStream toServer;
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+    public static void main(String[] args) { launch(args); }
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -57,20 +48,17 @@ public class gameBoard extends Application {
         BorderPane borderPane = new BorderPane();
         borderPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
 
-//        final Group root = new Group(borderPane);
-
         connectToServer();
 
-//        Font font = new Font("Consolas", 32);
-        Font titleFont = new Font("Consolas", 32);
-
         //Grid where letter cells are placed
-        GridPane gameBoard= new GridPane();
+        GridPane gameBoard = new GridPane();
         gameBoard.setPadding(new Insets(20.0D, 10.0D, 20.0D, 10.0D));
         gameBoard.setBackground(new Background(new BackgroundFill(Color.BEIGE, CornerRadii.EMPTY, Insets.EMPTY)));
-
         gameBoard.setAlignment(Pos.CENTER);
 
+        //Fonts
+        Font titleFont = new Font("Consolas", 32);
+        Font messageFont = new Font("Consolas", 22);
 
         int i=0;
         while(true) {
@@ -83,6 +71,7 @@ public class gameBoard extends Application {
             }
             break;
         }
+
         //set Cell objects to pane, and set token value of each cell
         for(int n=0; n < 4; n++)
             for(int j=0; j<4; j++){
@@ -100,7 +89,6 @@ public class gameBoard extends Application {
         }
 
         Scene scene = new Scene(borderPane, 600, 600);
-        scene.setFill(Color.CORNFLOWERBLUE);
 
         //Title
         Label title = new Label("Boggle 4x4");
@@ -111,24 +99,21 @@ public class gameBoard extends Application {
         borderPane.setCenter(gameBoard);
         borderPane.setAlignment(title, Pos.CENTER);
 
-        //Timer
-        //Bind time label to timerSeconds
-        displayTime.textProperty().bind(timerSeconds.asString());
-        displayTime.setTextFill(Color.BLACK);
-        displayTime.setStyle("-fx-font-size: 3em");
-        timerSeconds.set(STARTTIME);
-        timeline.getKeyFrames().add(new KeyFrame(Duration.seconds(STARTTIME + 1), e -> onFinished(), new KeyValue(timerSeconds, 0)));
-        timeline.playFromStart();
-
         //VBox for UI for guessing words and displaying information
         VBox uiVBox = new VBox();
         HBox hBox = new HBox();
         Button enterWord = new Button("Enter Word");
         Button clear = new Button("Clear Selection");
-        Label displayScore = new Label("0");
+        Label displayScore = new Label("" + score);
+        Label displayMessage = new Label();
+        displayScore.setFont(messageFont);
+        displayMessage.setTextFill(Color.RED);
+        displayMessage.setFont(messageFont);
+        displayTime.setFont(messageFont);
         hBox.getChildren().add(new Label("Score: "));
         hBox.getChildren().add(displayScore);
         hBox.setAlignment(Pos.CENTER);
+        uiVBox.getChildren().add(displayMessage);
         uiVBox.getChildren().add(displayTime);
         uiVBox.getChildren().add(enterWord);
         uiVBox.getChildren().add(clear);
@@ -142,17 +127,48 @@ public class gameBoard extends Application {
         clear.setOnMouseClicked(e -> clearSelection());
         enterWord.setOnMouseClicked(e -> {
             try {
-                checkWord(gameBoard, scene);
+                checkWord(displayScore, displayMessage);
             } catch (FileNotFoundException fileNotFoundException) {
                 fileNotFoundException.printStackTrace();
             }
         });
 
-        primaryStage.setMinHeight(650);
+        primaryStage.setMinHeight(675);
         primaryStage.setMinWidth(400);
         primaryStage.setTitle("Boggle 4x4");
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        //Make timer
+        timer = new Timer();
+        interval = initialSeconds;
+
+        timer.scheduleAtFixedRate(new TimerTask() {
+
+            public void run () {
+                Platform.runLater(() -> {
+                    remaining = setInterval();
+                    minutes = remaining / 60;
+                    seconds = remaining % 60;
+                    if (remaining > 59)
+                        if (seconds > 9)
+                            displayTime.setText(minutes + ":" + seconds);
+                        else
+                            //Display 0 in tens place
+                            displayTime.setText(minutes + ":0" + seconds);
+                    else if (seconds > 9)
+                        displayTime.setText("" + seconds);
+                    else
+                        displayTime.setText("" + seconds);
+                });
+            }
+
+        }, delay, period);
+
+        //End program after timer runs out
+        PauseTransition delay = new PauseTransition(Duration.seconds(initialSeconds));
+        delay.setOnFinished( event -> primaryStage.close());
+        delay.play();
     }
 
     private void connectToServer() throws IOException {
@@ -169,9 +185,10 @@ public class gameBoard extends Application {
 
     }
 
-    public void onFinished() {
-        System.out.println("Timer is up");
-//        timeline.stop();
+    public int setInterval(){
+        if (interval == 1)
+            timer.cancel();
+        return --interval;
     }
 
     public void clearSelection(){
@@ -185,17 +202,43 @@ public class gameBoard extends Application {
         word.setLength(0);
     }
 
-    public void checkWord(GridPane gameBoard, Scene scene) throws FileNotFoundException {
+    public void checkWord(Label scoreLabel, Label messageLabel) throws FileNotFoundException {
         boolean validWord = isWord();
+        boolean alreadyFound = false;
         String targetWord = word.toString();
         targetWord = targetWord.toLowerCase();
 
+        messageLabel.setText("");
+
         if (validWord){
-            System.out.println(word.toString() + " is a word");
-            foundWords.add(targetWord);
+            //Add word to found list if it hasn't been already
+            for (String foundWord : foundWords){
+                if (targetWord.equals(foundWord)) {
+                    alreadyFound = true;
+                    messageLabel.setText("\"" + targetWord + "\" already found");
+                }
+            }
+            //Add word and tally points
+            if (!alreadyFound && targetWord.length() > 2) {
+                foundWords.add(targetWord);
+
+                if (targetWord.length() == 3 || targetWord.length() == 4)
+                    score += 1;
+                else if (targetWord.length() == 5)
+                    score += 2;
+                else if (targetWord.length() == 6)
+                    score += 3;
+                else if (targetWord.length() == 7)
+                    score += 5;
+                else if (targetWord.length() > 7)
+                    score += 11;
+                scoreLabel.setText("" + score);
+            }
+            if (targetWord.length() < 3)
+                messageLabel.setText("\"" + targetWord + "\" is too short");
         }
         else{
-            System.out.println(word.toString() + " is invalid");
+            messageLabel.setText("\"" + targetWord + "\" is not a valid word");
         }
         clearSelection();
     }
@@ -231,10 +274,8 @@ public class gameBoard extends Application {
         private Color inactiveColor = Color.WHITE;
         Font font = new Font("Consolas", 32);
 
-
         public Cell(int row, int column, String letter) {
             this.letter = letter;
-            //letter.toLowerCase();
             label = new Label(letter);
             this.row = row;
             this.column = column;
