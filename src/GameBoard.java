@@ -167,7 +167,7 @@ public class GameBoard extends Application {
 
         //End program after timer runs out
         PauseTransition delay = new PauseTransition(Duration.seconds(initialSeconds));
-        delay.setOnFinished( event -> primaryStage.close());
+        delay.setOnFinished( event -> gameOver(primaryStage));
         delay.play();
     }
 
@@ -182,7 +182,27 @@ public class GameBoard extends Application {
             System.out.println(gameLetters[i]);
             i++;
         }
+    }
 
+    //Close main window and open score screen
+    public void gameOver(Stage primaryStage){
+        primaryStage.close();
+        Stage scoreStage = new Stage();
+
+        scoreStage.setTitle("Game Over");
+        BorderPane borderPane = new BorderPane();
+        Scene scoreScene = new Scene(borderPane, 400, 400);
+
+        VBox showScore = new VBox();
+        Label wordsFound = new Label("Words Found: " + foundWords);
+        Label displayScore = new Label("Final Score: " + score);
+        showScore.setStyle("-fx-font-size: 22pt");
+        showScore.getChildren().add(wordsFound);
+        showScore.getChildren().add(displayScore);
+        borderPane.setCenter(showScore);
+
+        scoreStage.setScene(scoreScene);
+        scoreStage.show();
     }
 
     public int setInterval(){
