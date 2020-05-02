@@ -251,7 +251,7 @@ public class GameBoard2 extends Application {
         VBox showOpponentScore= new VBox();
         showOpponentScore.getChildren().add(new Label(opponentName));
         showOpponentScore.getChildren().add(new Label("Opponent Score: " + opponentScore));
-        showOpponentScore.setStyle("-fx-font-size: 22pt");
+        showOpponentScore.setStyle("-fx-font-size: 10pt");
         showOpponentScore.setAlignment(Pos.CENTER);
 
         borderPane.setTop(hBox);

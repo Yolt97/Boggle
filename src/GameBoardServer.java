@@ -121,18 +121,31 @@ public class GameBoardServer extends Application {
                 if(player1Score > player2Score){
                     toPlayer1.writeUTF("You Win!");
                     toPlayer1.writeInt(player2Score);
+                    toPlayer1.writeUTF(player2Username);
+
                     toPlayer2.writeUTF(player1Username + " wins");
-                    toPlayer2.writeUTF(player1Username);
                     toPlayer2.writeInt(player1Score);
+                    toPlayer2.writeUTF(player1Username);
+
                 }
-                else{
+                else if (player1Score < player2Score){
                     toPlayer1.writeUTF(player2Username + "wins");
                     toPlayer1.writeInt(player2Score);
                     toPlayer1.writeUTF(player2Username);
+
                     toPlayer2.writeUTF("You win");
                     toPlayer2.writeInt(player1Score);
+                    toPlayer2.writeUTF(player1Username);
                     System.out.println("write to clients2");
-
+                }
+                else{
+                    toPlayer1.writeUTF("Its a tie");
+                    toPlayer1.writeInt(player2Score);
+                    toPlayer1.writeUTF(player2Username);
+                    toPlayer2.writeUTF("Its a tie");
+                    toPlayer2.writeInt(player1Score);
+                    toPlayer2.writeUTF(player1Username);
+                    System.out.println("write to clients2");
                 }
                 toPlayer1.flush();
                 toPlayer2.flush();

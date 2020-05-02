@@ -229,6 +229,7 @@ public class GameBoard extends Application {
         System.out.println("first read");
         int opponentScore= fromServer.readInt();
         String opponentName= fromServer.readUTF();
+        System.out.println("All reads");
 
         Stage scoreStage = new Stage();
 
@@ -251,7 +252,7 @@ public class GameBoard extends Application {
         VBox showOpponentScore= new VBox();
         showOpponentScore.getChildren().add(new Label(opponentName));
         showOpponentScore.getChildren().add(new Label("Opponent Score: " + opponentScore));
-        showOpponentScore.setStyle("-fx-font-size: 22pt");
+        showOpponentScore.setStyle("-fx-font-size: 10pt");
         showOpponentScore.setAlignment(Pos.CENTER);
 
         borderPane.setTop(hBox);
