@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -38,17 +39,33 @@ public class GameBoard2 extends Application {
     private Timer timer;
 
     private DataInputStream fromServer;
-    private OutputStream toServer;
+    private DataOutputStream toServer;
+
+    private TextField username= new TextField();
+    private String usernameStorage;
 
     public static void main(String[] args) { launch(args); }
 
     @Override
     public void start(Stage primaryStage) throws IOException {
+        Stage waitingStage= new Stage();
+        BorderPane waitingPane= new BorderPane();
+        HBox waitingBox= new HBox();
+        waitingBox.getChildren().add(new Label("Waiting for game to start"));
+        waitingBox.getChildren().add(username);
+        waitingPane.getChildren().add(waitingBox);
+        Scene waitingScene= new Scene(waitingPane);
+
+        waitingStage.setScene(waitingScene);
+        waitingBox.setMaxSize(200, 200);
+        waitingStage.setTitle("Game Lobby");
+        waitingStage.show();
+
+        connectToServer();
+
         //Create panes
         BorderPane borderPane = new BorderPane();
         borderPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
-
-        connectToServer();
 
         //Grid where letter cells are placed
         GridPane gameBoard = new GridPane();
@@ -60,6 +77,8 @@ public class GameBoard2 extends Application {
         Font titleFont = new Font("Consolas", 32);
         Font messageFont = new Font("Consolas", 22);
 
+        //while(waiting){}
+
         int i=0;
         while(true) {
             if(fromServer.available() <=0)
@@ -69,8 +88,10 @@ public class GameBoard2 extends Application {
                 System.out.println(gameLetters[i]);
                 i++;
             }
+            waitingStage.close();
             break;
         }
+//  waitForGame.close();
 
         //set Cell objects to pane, and set token value of each cell
         for(int n=0; n < 4; n++)
@@ -167,7 +188,13 @@ public class GameBoard2 extends Application {
 
         //End program after timer runs out
         PauseTransition delay = new PauseTransition(Duration.seconds(initialSeconds));
-        delay.setOnFinished( event -> gameOver(primaryStage));
+        delay.setOnFinished( event -> {
+            try {
+                gameOver(primaryStage);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
         delay.play();
     }
 
@@ -176,6 +203,11 @@ public class GameBoard2 extends Application {
 
         fromServer = new DataInputStream(socket.getInputStream());
         toServer= new DataOutputStream(socket.getOutputStream());
+        if(username.getText().trim().isEmpty())
+            usernameStorage= "Guest";
+        else
+            usernameStorage= username.getText();
+
         int i=0;
         while (fromServer.available()>0){
             gameLetters[i]=fromServer.readUTF();
@@ -185,24 +217,50 @@ public class GameBoard2 extends Application {
     }
 
     //Close main window and open score screen
-    public void gameOver(Stage primaryStage){
+    public void gameOver(Stage primaryStage) throws IOException {
         primaryStage.close();
+
+        toServer.writeInt(score);
+        toServer.writeUTF(usernameStorage);
+
+        System.out.println("We made it");
+
+        String winStatus=fromServer.readUTF();
+        System.out.println("first read");
+        int opponentScore= fromServer.readInt();
+        String opponentName= fromServer.readUTF();
+
         Stage scoreStage = new Stage();
 
         scoreStage.setTitle("Game Over");
         BorderPane borderPane = new BorderPane();
         Scene scoreScene = new Scene(borderPane, 400, 400);
 
-        VBox showScore = new VBox();
+        HBox hBox= new HBox();
+        hBox.getChildren().add(new Label(winStatus));
+        hBox.setAlignment(Pos.CENTER);
+
+        VBox showYourScore = new VBox();
         Label wordsFound = new Label("Words Found: " + foundWords);
         Label displayScore = new Label("Final Score: " + score);
-        showScore.setStyle("-fx-font-size: 22pt");
-        showScore.getChildren().add(wordsFound);
-        showScore.getChildren().add(displayScore);
-        borderPane.setCenter(showScore);
+        showYourScore.setStyle("-fx-font-size: 10pt");
+        showYourScore.getChildren().add(wordsFound);
+        showYourScore.getChildren().add(displayScore);
+        showYourScore.setAlignment(Pos.CENTER);
+
+        VBox showOpponentScore= new VBox();
+        showOpponentScore.getChildren().add(new Label(opponentName));
+        showOpponentScore.getChildren().add(new Label("Opponent Score: " + opponentScore));
+        showOpponentScore.setStyle("-fx-font-size: 22pt");
+        showOpponentScore.setAlignment(Pos.CENTER);
+
+        borderPane.setTop(hBox);
+        borderPane.setLeft(showYourScore);
+        borderPane.setRight(showOpponentScore);
 
         scoreStage.setScene(scoreScene);
         scoreStage.show();
+
     }
 
     public int setInterval(){

@@ -48,7 +48,7 @@ public class GameBoardServer extends Application {
 
                     Platform.runLater(() -> {
                         serverLog.appendText(new Date() + ": Player 1 joined session\n");
-                        serverLog.appendText("Player 1's IP address" +
+                        serverLog.appendText("Player 1's IP address " +
                                 player1.getInetAddress().getHostAddress() + '\n');
                     });
 
@@ -56,7 +56,7 @@ public class GameBoardServer extends Application {
                     Platform.runLater(() -> {
                         serverLog.appendText(new Date() +
                                 ": Player 2 joined session\n");
-                        serverLog.appendText("Player 2's IP address" +
+                        serverLog.appendText("Player 2's IP address " +
                                 player2.getInetAddress().getHostAddress() + '\n');
                     });
 
@@ -110,8 +110,34 @@ public class GameBoardServer extends Application {
                 for(int i= 0; i< 16; i++)
                     toPlayer2.writeUTF(String.valueOf(gameLetters[i]));
 
+                toPlayer1.flush();
+                toPlayer2.flush();
+
                 int player1Score= fromPlayer1.readInt();
+                String player1Username= fromPlayer1.readUTF();
                 int player2Score= fromPlayer2.readInt();
+                String player2Username= fromPlayer2.readUTF();
+
+                if(player1Score > player2Score){
+                    toPlayer1.writeUTF("You Win!");
+                    toPlayer1.writeInt(player2Score);
+                    toPlayer2.writeUTF(player1Username + " wins");
+                    toPlayer2.writeUTF(player1Username);
+                    toPlayer2.writeInt(player1Score);
+                }
+                else{
+                    toPlayer1.writeUTF(player2Username + "wins");
+                    toPlayer1.writeInt(player2Score);
+                    toPlayer1.writeUTF(player2Username);
+                    toPlayer2.writeUTF("You win");
+                    toPlayer2.writeInt(player1Score);
+                    System.out.println("write to clients2");
+
+                }
+                toPlayer1.flush();
+                toPlayer2.flush();
+
+
 
             } catch (IOException e) {
                 e.printStackTrace();
