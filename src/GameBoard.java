@@ -45,23 +45,33 @@ public class GameBoard extends Application {
     private TextField username = new TextField();
     private String usernameStorage;
 
+    private Stage waitingStage = new Stage();
+
+
     public static void main(String[] args) { launch(args); }
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        Stage waitingStage = new Stage();
         BorderPane waitingPane = new BorderPane();
+
         waitingPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
         HBox waitingBox = new HBox();
         waitingBox.getChildren().add(new Label("Waiting for game to start"));
-        waitingBox.getChildren().add(username);
         waitingBox.setMaxSize(450, 450);
         waitingPane.setCenter(waitingBox);
+
         Scene waitingScene = new Scene(waitingPane, 400, 400);
 
+
         waitingStage.setTitle("Game Lobby");
-        waitingStage.setScene(waitingScene);
-        waitingStage.show();
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                waitingStage.setScene(waitingScene);
+                waitingStage.show();
+            }
+        });
+
 
         connectToServer();
         int i=0;
@@ -440,6 +450,21 @@ public class GameBoard extends Application {
             firstmove = true;
             this.notClicked = true;
         }
+    }
+
+    public void pregame(){
+        BorderPane waitingPane = new BorderPane();
+        waitingPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
+        HBox waitingBox = new HBox();
+        waitingBox.getChildren().add(new Label("Waiting for game to start"));
+        waitingBox.getChildren().add(username);
+        waitingBox.setMaxSize(450, 450);
+        waitingPane.setCenter(waitingBox);
+        Scene waitingScene = new Scene(waitingPane, 400, 400);
+
+        waitingStage.setTitle("Game Lobby");
+        waitingStage.setScene(waitingScene);
+        waitingStage.show();
     }
 }
 
