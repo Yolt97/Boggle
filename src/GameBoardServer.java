@@ -129,7 +129,7 @@ public class GameBoardServer extends Application {
 
                 }
                 else if (player1Score < player2Score){
-                    toPlayer1.writeUTF(player2Username + "wins");
+                    toPlayer1.writeUTF(player2Username + " wins");
                     toPlayer1.writeInt(player2Score);
                     toPlayer1.writeUTF(player2Username);
 

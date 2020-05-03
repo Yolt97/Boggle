@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -41,28 +42,40 @@ public class GameBoard extends Application {
     private DataInputStream fromServer;
     private DataOutputStream toServer;
 
-    private TextField username= new TextField();
+    private TextField username = new TextField();
     private String usernameStorage;
 
     public static void main(String[] args) { launch(args); }
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        Stage waitingStage= new Stage();
-        BorderPane waitingPane= new BorderPane();
-        HBox waitingBox= new HBox();
+        Stage waitingStage = new Stage();
+        BorderPane waitingPane = new BorderPane();
+        waitingPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
+        HBox waitingBox = new HBox();
         waitingBox.getChildren().add(new Label("Waiting for game to start"));
         waitingBox.getChildren().add(username);
-        waitingPane.getChildren().add(waitingBox);
-        Scene waitingScene= new Scene(waitingPane);
+        waitingBox.setMaxSize(450, 450);
+        waitingPane.setCenter(waitingBox);
+        Scene waitingScene = new Scene(waitingPane, 400, 400);
 
-        waitingStage.setScene(waitingScene);
-        waitingBox.setMaxSize(200, 200);
         waitingStage.setTitle("Game Lobby");
+        waitingStage.setScene(waitingScene);
         waitingStage.show();
 
         connectToServer();
-
+        int i=0;
+        while(true) {
+            if(fromServer.available() <=0)
+                continue;
+            while (fromServer.available() > 0) {
+                gameLetters[i] = fromServer.readUTF();
+                System.out.println(gameLetters[i]);
+                i++;
+            }
+            waitingStage.close();
+            break;
+        }
         //Create panes
         BorderPane borderPane = new BorderPane();
         borderPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
@@ -77,21 +90,7 @@ public class GameBoard extends Application {
         Font titleFont = new Font("Consolas", 32);
         Font messageFont = new Font("Consolas", 22);
 
-        //while(waiting){}
 
-        int i=0;
-        while(true) {
-            if(fromServer.available() <=0)
-                continue;
-            while (fromServer.available() > 0) {
-                gameLetters[i] = fromServer.readUTF();
-                System.out.println(gameLetters[i]);
-                i++;
-            }
-            waitingStage.close();
-            break;
-        }
-//  waitForGame.close();
 
         //set Cell objects to pane, and set token value of each cell
         for(int n=0; n < 4; n++)
@@ -199,18 +198,18 @@ public class GameBoard extends Application {
     }
 
     private void connectToServer() throws IOException {
-        Socket socket= new Socket("localhost", 8000);
+        Socket socket = new Socket("localhost", 8000);
 
         fromServer = new DataInputStream(socket.getInputStream());
-        toServer= new DataOutputStream(socket.getOutputStream());
+        toServer = new DataOutputStream(socket.getOutputStream());
         if(username.getText().trim().isEmpty())
             usernameStorage= "Guest";
         else
-            usernameStorage= username.getText();
+            usernameStorage = username.getText();
 
         int i=0;
         while (fromServer.available()>0){
-            gameLetters[i]=fromServer.readUTF();
+            gameLetters[i]= fromServer.readUTF();
             System.out.println(gameLetters[i]);
             i++;
         }
@@ -229,35 +228,61 @@ public class GameBoard extends Application {
         System.out.println("first read");
         int opponentScore= fromServer.readInt();
         String opponentName= fromServer.readUTF();
-        System.out.println("All reads");
 
         Stage scoreStage = new Stage();
+        scoreStage.setMinWidth(400);
+        scoreStage.setMinHeight(400);
 
         scoreStage.setTitle("Game Over");
         BorderPane borderPane = new BorderPane();
+        borderPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
         Scene scoreScene = new Scene(borderPane, 400, 400);
 
         HBox hBox= new HBox();
-        hBox.getChildren().add(new Label(winStatus));
+        Label displayWinStatus = new Label(winStatus);
+        displayWinStatus.setStyle("-fx-font-size: 2em");
+        hBox.getChildren().add(displayWinStatus);
         hBox.setAlignment(Pos.CENTER);
+        hBox.setPadding(new Insets(75.0D, 10.0D, 10.0D, 10.0D));
 
         VBox showYourScore = new VBox();
-        Label wordsFound = new Label("Words Found: " + foundWords);
         Label displayScore = new Label("Final Score: " + score);
+        displayScore.setStyle("-fx-text-fill: green; -fx-font-size: 2em");
         showYourScore.setStyle("-fx-font-size: 10pt");
-        showYourScore.getChildren().add(wordsFound);
         showYourScore.getChildren().add(displayScore);
         showYourScore.setAlignment(Pos.CENTER);
+        showYourScore.setPadding(new Insets(10.0D, 10.0D, 10.0D, 10.0D));
 
         VBox showOpponentScore= new VBox();
-        showOpponentScore.getChildren().add(new Label(opponentName));
-        showOpponentScore.getChildren().add(new Label("Opponent Score: " + opponentScore));
-        showOpponentScore.setStyle("-fx-font-size: 10pt");
+        Label displayOpponentName = new Label(opponentName);
+        Label displayOpponentScore = new Label("Opponent Final Score: " + opponentScore);
+        displayOpponentName.setStyle("-fx-text-fill: red; -fx-font-size: 2em");
+        displayOpponentScore.setStyle("-fx-text-fill: red; -fx-font-size: 2em");
+        showOpponentScore.getChildren().add(displayOpponentName);
+        showOpponentScore.getChildren().add(displayOpponentScore);
+        showOpponentScore.setStyle("-fx-font-size: 10pt;");
         showOpponentScore.setAlignment(Pos.CENTER);
+        showOpponentScore.setPadding(new Insets(10.0D, 10.0D, 10.0D, 10.0D));
+
+        VBox scoreContainer = new VBox();
+        scoreContainer.getChildren().add(showYourScore);
+        scoreContainer.getChildren().add(showOpponentScore);
+        scoreContainer.setAlignment(Pos.CENTER);
+
+        //Add words found
+        VBox showWordsFound = new VBox();
+        Label wordsFoundLabel = new Label("Words Found:");
+        showWordsFound.getChildren().add(wordsFoundLabel);
+        for(int i=0; i<foundWords.size(); i++)
+            showWordsFound.getChildren().add(new Label(i+1 + ": " + foundWords.get(i)));
+        showWordsFound.setAlignment(Pos.TOP_CENTER);
+        showWordsFound.setPadding(new Insets(10.0D, 10.0D, 40.0D, 10.0D));
 
         borderPane.setTop(hBox);
-        borderPane.setLeft(showYourScore);
-        borderPane.setRight(showOpponentScore);
+//        borderPane.setLeft(showYourScore);
+//        borderPane.setRight(showOpponentScore);
+        borderPane.setCenter(scoreContainer);
+        borderPane.setBottom(showWordsFound);
 
         scoreStage.setScene(scoreScene);
         scoreStage.show();
