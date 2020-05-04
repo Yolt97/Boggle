@@ -1,3 +1,7 @@
+/*
+    Authors: Joshua Denham and Aaron Westhoff
+ */
+
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -6,7 +10,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -47,31 +50,10 @@ public class GameBoard extends Application {
 
     private Stage waitingStage = new Stage();
 
-
     public static void main(String[] args) { launch(args); }
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        BorderPane waitingPane = new BorderPane();
-
-        waitingPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
-        HBox waitingBox = new HBox();
-        waitingBox.getChildren().add(new Label("Waiting for game to start"));
-        waitingBox.setMaxSize(450, 450);
-        waitingPane.setCenter(waitingBox);
-
-        Scene waitingScene = new Scene(waitingPane, 400, 400);
-
-
-        waitingStage.setTitle("Game Lobby");
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                waitingStage.setScene(waitingScene);
-                waitingStage.show();
-            }
-        });
-
 
         connectToServer();
         int i=0;
@@ -83,7 +65,6 @@ public class GameBoard extends Application {
                 System.out.println(gameLetters[i]);
                 i++;
             }
-            waitingStage.close();
             break;
         }
         //Create panes
@@ -99,8 +80,6 @@ public class GameBoard extends Application {
         //Fonts
         Font titleFont = new Font("Consolas", 32);
         Font messageFont = new Font("Consolas", 22);
-
-
 
         //set Cell objects to pane, and set token value of each cell
         for(int n=0; n < 4; n++)
@@ -241,12 +220,12 @@ public class GameBoard extends Application {
 
         Stage scoreStage = new Stage();
         scoreStage.setMinWidth(400);
-        scoreStage.setMinHeight(400);
+        scoreStage.setMinHeight(450);
 
         scoreStage.setTitle("Game Over");
         BorderPane borderPane = new BorderPane();
         borderPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
-        Scene scoreScene = new Scene(borderPane, 400, 400);
+        Scene scoreScene = new Scene(borderPane, 400, 500);
 
         HBox hBox= new HBox();
         Label displayWinStatus = new Label(winStatus);
@@ -263,7 +242,7 @@ public class GameBoard extends Application {
         showYourScore.setAlignment(Pos.CENTER);
         showYourScore.setPadding(new Insets(10.0D, 10.0D, 10.0D, 10.0D));
 
-        VBox showOpponentScore= new VBox();
+        VBox showOpponentScore = new VBox();
         Label displayOpponentName = new Label(opponentName);
         Label displayOpponentScore = new Label("Opponent Final Score: " + opponentScore);
         displayOpponentName.setStyle("-fx-text-fill: red; -fx-font-size: 2em");
@@ -280,33 +259,69 @@ public class GameBoard extends Application {
         scoreContainer.setAlignment(Pos.CENTER);
 
         //Add words found
+        VBox wordsFoundContainer = new VBox();
+        HBox wordsFoundColumns = new HBox();
+        //Unlikely to find more than 60 words
         VBox showWordsFound = new VBox();
+        VBox showWordsFound2 = new VBox();
+        VBox showWordsFound3 = new VBox();
+        VBox showWordsFound4 = new VBox();
+        VBox showWordsFound5 = new VBox();
+        VBox showWordsFound6 = new VBox();
         Label wordsFoundLabel = new Label("Words Found:");
-        showWordsFound.getChildren().add(wordsFoundLabel);
-        for(int i=0; i<foundWords.size(); i++)
-            showWordsFound.getChildren().add(new Label(i+1 + ": " + foundWords.get(i)));
-        showWordsFound.setAlignment(Pos.TOP_CENTER);
-        showWordsFound.setPadding(new Insets(10.0D, 10.0D, 40.0D, 10.0D));
+        wordsFoundContainer.getChildren().add(wordsFoundLabel);
+        int columnCounter = 0;
+        for(int i=0; i<foundWords.size(); i++) {
+            //New column every 10
+                columnCounter = (i) / 10;
+                if (columnCounter == 0)
+                    showWordsFound.getChildren().add(new Label((i+1) + ": " + foundWords.get(i)));
+                else if (columnCounter == 1)
+                    showWordsFound2.getChildren().add(new Label("\t" + (i+1) + ": " + foundWords.get(i)));
+                else if (columnCounter == 2)
+                    showWordsFound3.getChildren().add(new Label("\t" + (i+1) + ": " + foundWords.get(i)));
+                else if (columnCounter == 3)
+                    showWordsFound4.getChildren().add(new Label("\t" + (i+1) + ": " + foundWords.get(i)));
+                else if (columnCounter == 4)
+                    showWordsFound5.getChildren().add(new Label("\t" + (i+1) + ": " + foundWords.get(i)));
+                else
+                    showWordsFound6.getChildren().add(new Label("\t" + (i+1) + ": " + foundWords.get(i)));
+        }
+        //Add columns
+        wordsFoundColumns.getChildren().add(showWordsFound);
+        if (columnCounter > 0) {
+            if (columnCounter == 1)
+                wordsFoundColumns.getChildren().add(showWordsFound2);
+            if (columnCounter == 2)
+                wordsFoundColumns.getChildren().addAll(showWordsFound2, showWordsFound3);
+            if (columnCounter == 3)
+                wordsFoundColumns.getChildren().addAll(showWordsFound2, showWordsFound3, showWordsFound4);
+            if (columnCounter == 4)
+                wordsFoundColumns.getChildren().addAll(showWordsFound2, showWordsFound3, showWordsFound4, showWordsFound5);
+            if (columnCounter == 5)
+                wordsFoundColumns.getChildren().addAll(showWordsFound2, showWordsFound3, showWordsFound4, showWordsFound5, showWordsFound6);
+        }
+        wordsFoundContainer.setAlignment(Pos.TOP_CENTER);
+        wordsFoundContainer.getChildren().add(wordsFoundColumns);
+        wordsFoundColumns.setAlignment(Pos.TOP_CENTER);
 
         borderPane.setTop(hBox);
-//        borderPane.setLeft(showYourScore);
-//        borderPane.setRight(showOpponentScore);
         borderPane.setCenter(scoreContainer);
-        borderPane.setBottom(showWordsFound);
+        borderPane.setBottom(wordsFoundContainer);
 
         scoreStage.setScene(scoreScene);
         scoreStage.show();
-
     }
 
+    //Decrement timer
     public int setInterval(){
         if (interval == 1)
             timer.cancel();
         return --interval;
     }
 
+    //Method to unselect all cells
     public void clearSelection(){
-        //Unselect all cells
         for (int i=0; i<4; i++){
             for (int j=0; j<4; j++) {
                 cell[i][j].unselect();
@@ -316,6 +331,7 @@ public class GameBoard extends Application {
         word.setLength(0);
     }
 
+    //Method to check validity of the selected word
     public void checkWord(Label scoreLabel, Label messageLabel) throws FileNotFoundException {
         boolean validWord = isWord();
         boolean alreadyFound = false;
@@ -357,7 +373,7 @@ public class GameBoard extends Application {
         clearSelection();
     }
 
-    //Search dictionary to check word
+    //Search dictionary to see if the selected word is a word
     public boolean isWord() throws FileNotFoundException {
         String queryWord = word.toString();
         queryWord = queryWord.toLowerCase();
@@ -374,7 +390,7 @@ public class GameBoard extends Application {
         return isWord;
     }
 
-    //used the cell class from the Tic Tac Toe example
+    //Used the cell class from the Tic Tac Toe example
     public class Cell extends StackPane {
         // Indicate the row and column of this cell in the board
         private int row;
@@ -442,7 +458,6 @@ public class GameBoard extends Application {
             else if((cellColumn == (lastCellColumn - 1) || cellColumn == (lastCellColumn + 1)) && (cellRow == (lastCellRow - 1) || cellRow == (lastCellRow + 1)))
                 return true;
             return false;
-
         }
 
         public void unselect(){

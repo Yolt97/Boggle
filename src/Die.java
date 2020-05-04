@@ -1,3 +1,7 @@
+/*
+    Author: Joshua Denham
+ */
+
 import java.util.Random;
 
 public class Die {
