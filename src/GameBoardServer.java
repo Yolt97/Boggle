@@ -81,7 +81,7 @@ public class GameBoardServer extends Application {
         private DataOutputStream toPlayer2;
 
         public HandleSession(Socket player1, Socket player2) {
-            this.player1= player1;
+            this.player1 = player1;
             this.player2 = player2;
 
             //get letters for cells
@@ -145,17 +145,13 @@ public class GameBoardServer extends Application {
                 toPlayer1.flush();
                 toPlayer2.flush();
 
-
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
 
         public void rollDice() {
             ArrayList<Die> dice = new ArrayList<>(); //Dice
-            // ArrayList<String> letters = new ArrayList<>(); //Letters chosen from dice
 
             //Add unrolled dice
             dice.add(new Die(new String[]{"A", "A", "E", "E", "G", "N"}));

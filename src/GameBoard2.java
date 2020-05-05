@@ -1,6 +1,7 @@
 /*
     Authors: Joshua Denham and Aaron Westhoff
  */
+
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -256,7 +257,6 @@ public class GameBoard2 extends Application {
         scoreContainer.getChildren().add(showYourScore);
         scoreContainer.getChildren().add(showOpponentScore);
         scoreContainer.setAlignment(Pos.CENTER);
-        scoreContainer.setPadding(new Insets(10.0D, 10.0D, 20.0D, 10.0D));
 
         //Add words found
         VBox wordsFoundContainer = new VBox();
@@ -465,21 +465,6 @@ public class GameBoard2 extends Application {
             firstmove = true;
             this.notClicked = true;
         }
-    }
-
-    public void pregame(){
-        BorderPane waitingPane = new BorderPane();
-        waitingPane.setBackground(new Background(new BackgroundFill(Color.PALEGOLDENROD, CornerRadii.EMPTY, Insets.EMPTY)));
-        HBox waitingBox = new HBox();
-        waitingBox.getChildren().add(new Label("Waiting for game to start"));
-        waitingBox.getChildren().add(username);
-        waitingBox.setMaxSize(450, 450);
-        waitingPane.setCenter(waitingBox);
-        Scene waitingScene = new Scene(waitingPane, 400, 400);
-
-        waitingStage.setTitle("Game Lobby");
-        waitingStage.setScene(waitingScene);
-        waitingStage.show();
     }
 }
 
